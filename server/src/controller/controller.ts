@@ -252,30 +252,35 @@ This OTP is valid for 10 minutes.
     res.status(500).send("Server error");
   }
 });
-router.post("/api/refresh-token", async(req:Request, res:Response):Promise<void> => {
-  const { refreshToken } = req.body;
+router.post(
+  "/refresh-token",
+  async (req: Request, res: Response): Promise<void> => {
+    const { refreshToken } = req.body;
 
-  if (!refreshToken || !refreshTokens.includes(refreshToken)) {
-    return void res.status(403).json({ message: "Refresh token invalid" });
+    if (!refreshToken || !refreshTokens.includes(refreshToken)) {
+      return void res.status(403).json({ message: "Refresh token invalid" });
+    }
+
+    try {
+      const payload = jwt.verify(
+        refreshToken,
+        process.env.REFRESH_TOKEN_SECRET!
+      );
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const newAccessToken = generateAccessToken((payload as any).id);
+      res.json({ accessToken: newAccessToken });
+    } catch (err) {
+      res.status(403).json({ message: "Invalid or expired refresh token" });
+    }
   }
+);
 
-  try {
-    const payload = jwt.verify(refreshToken, process.env.REFRESH_TOKEN_SECRET!);
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const newAccessToken = generateAccessToken((payload as any).id);
-    res.json({ accessToken: newAccessToken });
-  } catch (err) {
-    res.status(403).json({ message: "Invalid or expired refresh token" });
-  }
-});
-
-router.post("/api/logout", (req, res) => {
+router.post("/logout", (req, res) => {
   const { refreshToken } = req.body;
   const index = refreshTokens.indexOf(refreshToken);
   if (index > -1) refreshTokens.splice(index, 1); // ✅ Remove it
 
   res.json({ message: "Logged out successfully" });
 });
-
 
 export default router;

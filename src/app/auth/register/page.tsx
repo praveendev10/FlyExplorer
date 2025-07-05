@@ -16,7 +16,7 @@ import {
   TextField,
   Typography,
 } from "@mui/material";
-import dayjs, { Dayjs } from "dayjs";
+
 import {
   registerStart,
   verifyOTPStart,

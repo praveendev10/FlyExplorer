@@ -7,7 +7,7 @@ const axiosInstance = axios.create({
     "Content-Type": "application/json",
   },
 });
-
+console.log("axiosInstance page");
 // Token refresh control flags
 let isRefreshing = false;
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -93,7 +93,7 @@ axiosInstance.interceptors.response.use(
         // Token refresh failed → log out user
         processQueue(err, null);
         localStorage.clear();
-        window.location.href = "/login";
+
         return Promise.reject(err);
       } finally {
         isRefreshing = false;

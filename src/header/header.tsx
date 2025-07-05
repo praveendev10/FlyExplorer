@@ -27,6 +27,7 @@ function Header() {
   };
   const { user } = useSelector((state: RootState) => state.auth);
   const handleClose = () => {
+     
     setAnchorEl(null);
   };
   const handleAuthToggle = () => {

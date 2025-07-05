@@ -27,20 +27,25 @@ import {
 } from "../slice/reducer";
 function loginApi(data: ILoginPayload) {
   console.log(data);
-  return axios.post("http://localhost:5000/api/login", data);
+  return axiosInstance.post("/login", data); // ✅ FIXED
 }
+
 function verifyOTP(data: IVerifyOTP) {
-  return axios.post("http://localhost:5000/api/verify-otp", data);
+  return axiosInstance.post("/verify-otp", data); // ✅ FIXED
 }
+
 function registerApi(data: IRegisterPayload) {
-  return axios.post("http://localhost:5000/api/registerUser", data);
+  return axiosInstance.post("/registerUser", data); // ✅ FIXED
 }
+
 function resendOTP(data: IReSendOTP) {
-  return axios.post("http://localhost:5000/api/resend-otp", data);
+  return axiosInstance.post("/resend-otp", data); // ✅ FIXED
 }
-function logoutApi(refreshToken: string | null) {
-  return axiosInstance.post("/logout", { refreshToken });
+function logoutApi(refreshToken: string) {
+  console.log("🔥 Calling /logout with refreshToken:", refreshToken);
+  return axiosInstance.post("/logout", { refreshToken }); // ✅ Correct
 }
+
 function* handleLogin(action: ReturnType<typeof loginStart>): SagaIterator {
   try {
     const response = yield call(loginApi, action.payload);
@@ -48,7 +53,7 @@ function* handleLogin(action: ReturnType<typeof loginStart>): SagaIterator {
     console.log("response", response.data.accessToken);
 
     localStorage.setItem("token", response.data.accessToken);
-
+    localStorage.setItem("refreshToken", response.data.refreshToken);
     yield put(loginSuccess(response.data));
     const tokens = localStorage.getItem("token");
 
@@ -106,24 +111,29 @@ function* handleReSendOTP(
 }
 function* handleLogout(): SagaIterator {
   try {
+    console.log("🚀 Logout saga running");
+
     const refreshToken = localStorage.getItem("refreshToken");
+    console.log("📦 Refresh Token:", refreshToken);
 
-    // Optional: Call backend to invalidate token
-    if (refreshToken) {
-      yield call(logoutApi, refreshToken);
-
-      console.log("Logout success");
-      // ✅ Clear tokens from localStorage
-      localStorage.removeItem("accessToken");
-      localStorage.removeItem("refreshToken");
-
-      yield put(logoutSuccess());
-
-      // ✅ Redirect to login
+    if (!refreshToken) {
+      console.warn("❌ No refresh token found");
+      return;
     }
+
+    yield call(logoutApi, refreshToken); // 🔥 this uses axiosInstance
+
+    localStorage.removeItem("accessToken");
+    localStorage.removeItem("refreshToken");
+
+    yield put(logoutSuccess());
+
+    console.log("✅ Logout done, redirecting...");
+    window.location.href = "auth/login";
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
   } catch (e: any) {
-    yield put(logoutFailure(e.response?.data?.msg || e.message));
+    console.error("❌ Logout failed:", e.message);
+    yield put(logoutFailure(e.message));
   }
 }
 
